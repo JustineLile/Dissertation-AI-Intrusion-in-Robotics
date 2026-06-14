@@ -9,4 +9,5 @@ Once installed setup of a ros2 workspace is required: </br>
 Then can clone the repo </br>
 To run, have two terminals open, in one run "ros2 run cpp_robot server"</br>
 In the other, "ros2 run cpp_robot kclient" </br>
-From there can input in format "move <distance> <direction (radians)>", "quit"</br>
+From there can input in format "move <distance> <direction (radians)>", "load <absolute_file_path>" and "quit"</br>
+Inputted files are treated with each line as one of the above commands </br>
