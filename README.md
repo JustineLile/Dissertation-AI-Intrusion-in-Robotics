@@ -1,9 +1,12 @@
 # Diss-Intrusion-Detection
-
-Step 1 - creation of a robotics system utilising the Ros2 library which outputs log files </br>
-Step 2 - instertion of vulnerabilities to robotics program </br>
-Step 3 - creation of script to gather a variety of attacks and log files </br>
-Step 4 - transform log files into dataset for training </br>
-Step 5 - begin training AI, feature selection and algorithm choices </br>
-Step 6 - refine AI </br>
-Step 7 - experiment ... </br>
+Running - </br>
+Install ros2 lyrical luth : Was carried out following "https://docs.ros.org/en/lyrical/Installation/Ubuntu-Install-Debs.html" for linux.
+Once installed setup of a ros2 workspace is required: </br>
+1. "source /opt/ros/lyrical/setup.bash"
+2. "mkdir -p ~/ros2_ws/src"
+3. "cd ~/ros2_ws/src"
+Then can clone the repo
+To run, have two terminals open, in one run
+"ros2 run cpp_robot server"
+In the other, "ros2 run cpp_robot kclient"
+From there can input in format "move <distance> <direction (radians)>", "quit"
