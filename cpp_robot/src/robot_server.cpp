@@ -7,8 +7,10 @@
 #include "geometry_msgs/msg/pose.hpp"
 
 #include "cpp_robot/srv/move_direction.hpp"
+#include "cpp_robot/srv/get_position.hpp"
 
 using MoveDirection = cpp_robot::srv::MoveDirection;
+using GetPosition = cpp_robot::srv::GetPosition;
 
 using AddTwoInts = example_interfaces::srv::AddTwoInts;
 rclcpp::Node::SharedPtr g_node = nullptr;
@@ -32,7 +34,8 @@ class MoveServer : public rclcpp::Node {
 
 public:
         MoveServer() : Node("move_server") {
-                service_ = this->create_service<MoveDirection>(
+		//movement service
+                move_service_ = this->create_service<MoveDirection>(
                         "move_direction",
                         std::bind(&MoveServer::handle_request,
                                 this,
@@ -40,15 +43,25 @@ public:
                                 std::placeholders::_2)
                 );
 
-                RCLCPP_INFO(this->get_logger(), "MoveDirection service ready");
+		//get position service
+		pos_service_ = this->create_service<GetPosition>(
+			"get_position",
+			std::bind(&MoveServer::position_callback,
+				this,
+				std::placeholders::_1,
+				std::placeholders::_2)
+		);
+                RCLCPP_INFO(this->get_logger(), "Move and Get Position services ready");
         }
 
 private:
-        rclcpp::Service<MoveDirection>::SharedPtr service_;
+        rclcpp::Service<MoveDirection>::SharedPtr move_service_;
+	rclcpp::Service<GetPosition>::SharedPtr pos_service_;
 
-        //x_ and y_ as x and y used by geometry pose
+        //x_ and y_ as x and y used by geometry pose for state which can be accessed by other clients
         double x_ = 0.0;
         double y_ = 0.0;
+	//when requested to move, gets the vals from message and transforms pos
         void handle_request(const std::shared_ptr<MoveDirection::Request> request, std::shared_ptr<MoveDirection::Response> response) {
                 RCLCPP_INFO(
                         this->get_logger(),
@@ -73,11 +86,20 @@ private:
                 pose.position.x = x_;
                 pose.position.y = y_;
                 pose.position.z = 0.0;
-
+		
+		//populate response message with positioning, success bool and msg
                 response->final_pose = pose;
                 response->success = true;
                 response->message = "Move Completed";
         }       
+
+	//when getposition is called return what is currently stored in state
+	void position_callback(const std::shared_ptr<GetPosition::Request>,
+		std::shared_ptr<GetPosition::Response> res){
+		res->current_pose.position.x = x_;
+		res->current_pose.position.y = y_;
+	}
+
 };
 
 int main(int argc, char ** argv)
