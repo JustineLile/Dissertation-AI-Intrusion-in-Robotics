@@ -8,6 +8,7 @@
 #include <fstream>
 
 #include "rclcpp/rclcpp.hpp"
+#include "geometry_msgs/msg/pose.hpp"
 #include "cpp_robot/srv/move_direction.hpp"
 #include "cpp_robot/srv/get_position.hpp"
 
@@ -21,9 +22,10 @@ class KeyInClient : public rclcpp::Node {
 public:
         KeyInClient() : Node("keyin_client"){
                 client_ = this->create_client<MoveDirection>("move_direction");
+		position_client_ = this->create_client<GetPosition>("get_position");
         }
  
-	//create the request and send
+	//create the request and send for moving
         rclcpp::Client<MoveDirection>::FutureAndRequestId send_request(double distance, double direction) {
                 auto request = std::make_shared<MoveDirection::Request>();
                 request->distance = distance;
@@ -40,7 +42,10 @@ public:
                 return true;
         }
 
-	
+	void wait_services(){
+		client_->wait_for_service();
+		position_client_->wait_for_service();
+	}
 
 	void process_input(std::stringstream& input){
 		std::string cmd;
@@ -69,6 +74,11 @@ public:
                         //open file then process till eof
 			this->load_file(filename);
                 }
+		else if (cmd == "current"){
+			auto pose = this->get_current_pos();
+        		std::cout << "Current position: (" << pose.position.x << ", " << pose.position.y << ")\n";
+
+		}
 
 	}
 
@@ -124,10 +134,19 @@ public:
 		}
 	}
 
+	geometry_msgs::msg::Pose get_current_pos(){
+		auto req = std::make_shared<GetPosition::Request>();
+		auto fut = position_client_->async_send_request(req);
+		rclcpp::spin_until_future_complete(this->shared_from_this(), fut);
+		auto response = fut.get();
+		return response->current_pose;
+	}
+
 
 //local client
 private:
       	rclcpp::Client<MoveDirection>::SharedPtr client_;
+	rclcpp::Client<GetPosition>::SharedPtr position_client_;
 };
 
 int main(int argc, char * argv[])
@@ -135,26 +154,18 @@ int main(int argc, char * argv[])
  
         rclcpp::init(argc, argv);
         auto node = std::make_shared<KeyInClient>();
-	auto position_node = node->create_client<GetPosition>("get_position");
-        node->wait_for_service();
-	position_node->wait_for_service();
 	
-	//on startup, get current node
-        auto pos_req = std::make_shared<GetPosition::Request>();
-        auto pos_fut = position_node->async_send_request(pos_req);
-        if (rclcpp::spin_until_future_complete(node, pos_fut) == rclcpp::FutureReturnCode::SUCCESS){
-                auto pos_res = pos_fut.get();
-                		std::cout << "Current Position: " << pos_res->current_pose.position.x << " " <<  pos_res->current_pose.position.y << "\n";
-        }
-        else{
-                std::cout << "Failed to find current position\n";
-        }
-
+	//current position service to get initial positioning
+	node->wait_services();
+	auto pose = node->get_current_pos();
+	std::cout << "Start position: (" << pose.position.x << ", " << pose.position.y << ")\n";
+	
 	
 	//cmd line interfacing
 	std::cout << "Commands:\n";
 	std::cout << "Move robot 'move <distance> <direction>'\n";
 	std::cout << "Load commands from file 'load <absolute_file_path>'\n";
+	std::cout << "Current position of Robot 'current'\n";
 	std::cout << "Quit Client 'q'\n";
 
 	std::string line;
