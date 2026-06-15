@@ -96,8 +96,9 @@ public:
           	              RCLCPP_INFO(
 				//populate with success and position
                               	this->get_logger(),
-                                "Success: %s | Position: (%.2f, %.2f)",
+                                "%s | Distance Travelled: %.2f | Position: (%.2f, %.2f)",
                                 response->message.c_str(),
+				response->act_distance,
                                 response->final_pose.position.x,
                                 response->final_pose.position.y
                                 );
@@ -135,8 +136,10 @@ public:
 	}
 
 	geometry_msgs::msg::Pose get_current_pos(){
+		//use getposition service to request position and return pose
 		auto req = std::make_shared<GetPosition::Request>();
 		auto fut = position_client_->async_send_request(req);
+		//ensures it completes
 		rclcpp::spin_until_future_complete(this->shared_from_this(), fut);
 		auto response = fut.get();
 		return response->current_pose;

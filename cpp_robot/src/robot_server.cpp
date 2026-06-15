@@ -12,23 +12,9 @@
 using MoveDirection = cpp_robot::srv::MoveDirection;
 using GetPosition = cpp_robot::srv::GetPosition;
 
-using AddTwoInts = example_interfaces::srv::AddTwoInts;
 rclcpp::Node::SharedPtr g_node = nullptr;
 
-/*
-void handle_service(
-  const std::shared_ptr<rmw_request_id_t> request_header,
-  const std::shared_ptr<AddTwoInts::Request> request,
-  const std::shared_ptr<AddTwoInts::Response> response)
-{
-  (void)request_header;
-  RCLCPP_INFO(
-    g_node->get_logger(),
-    "request: %" PRId64 " + %" PRId64, request->a, request->b);
-  response->sum = request->a + request->b;
-}
 
-*/
 
 class MoveServer : public rclcpp::Node {
 
@@ -55,6 +41,13 @@ public:
         }
 
 private:
+	//Wall boundries
+	static constexpr double MIN_X = 0.0;
+	static constexpr double MIN_Y = 0.0;
+	static constexpr double MAX_X = 10.0;
+	static constexpr double MAX_Y = 10.0;
+
+
         rclcpp::Service<MoveDirection>::SharedPtr move_service_;
 	rclcpp::Service<GetPosition>::SharedPtr pos_service_;
 
@@ -65,21 +58,38 @@ private:
         void handle_request(const std::shared_ptr<MoveDirection::Request> request, std::shared_ptr<MoveDirection::Response> response) {
                 RCLCPP_INFO(
                         this->get_logger(),
-                        "Request: distance=%.2f direction=%.2",
+                        "Request: distance=%.2f direction=%.2f",
                         request->distance,
                         request->direction);
+		
+		//simulate robot incremental movement
+		const double step = 0.05;  //increment by 0.05 for each "step" for boundry checks
+		double dist_moved = 0.0;	//init
+		
+		//converts to direction vector ie direction = 1 radians would be "right" cos(1), sin(1) = (1, 0)
+		double dx = std::cos(request->direction);
+		double dy = std::sin(request->direction);
+		
+		//incrementally step movement to simulate actual robots movement
+		while (dist_moved < request->distance){
+			//find next pos and check for boundries
+			double nxt_x = x_ + step * dx; //current x + distance * angle
+			double nxt_y = y_ + step * dy;
+			bool obstructed = nxt_x < MIN_X || nxt_x > MAX_X || nxt_y < MIN_Y || nxt_y > MAX_Y;
+			//if hit boundries then exit loop
+			if (obstructed){
+				break;
+			}
+			//increment for next step
+			x_ = nxt_x;
+			y_ = nxt_y;
+			dist_moved += step;
+		}                
 
-                if (request->distance < 0.0 || request->distance > 5.0){
-                        response->success = false; 
-                        response->message = "Distance not in accepted range"; 
-                        return;
-                }
-                
-                //transform for movement
-                double dx = request->distance*std::cos(request->direction);
-                double dy = request->distance*std::sin(request->direction);
-                x_ += dx;
-                y_ += dy;
+                //double dx = request->distance*std::cos(request->direction);
+                //double dy = request->distance*std::sin(request->direction);
+                //x_ += dx;
+                //y_ += dy;
                 
                 //update position in 2d space
                 geometry_msgs::msg::Pose pose;
@@ -90,7 +100,19 @@ private:
 		//populate response message with positioning, success bool and msg
                 response->final_pose = pose;
                 response->success = true;
-                response->message = "Move Completed";
+		response->act_distance = (float)dist_moved;
+		//change response message if it hits wall
+		if (dist_moved < request->distance){
+			response->message = "Obstructed before completeing requested distance";
+		}
+		else {
+                	response->message = "Move Completed";
+		}
+		
+		RCLCPP_INFO(
+			get_logger(),
+			"Requested %.2f m, Moved %.2f m, Position (%.2f, %.2f)",
+			request->distance, dist_moved, x_, y_);
         }       
 
 	//when getposition is called return what is currently stored in state
