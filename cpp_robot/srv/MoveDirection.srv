@@ -5,4 +5,5 @@ float32 direction # radians
 # Response
 bool success
 string message
+float32 act_distance
 geometry_msgs/Pose final_pose
