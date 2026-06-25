@@ -1,5 +1,7 @@
 # Request
-
+string session_id
+int32 parent_id
+int32 command_id
 ---
 #Response
 geometry_msgs/Pose current_pose

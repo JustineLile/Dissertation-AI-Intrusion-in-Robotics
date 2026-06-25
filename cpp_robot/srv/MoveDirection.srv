@@ -1,3 +1,6 @@
+string session_id
+int32 command_id
+int32 parent_id
 float32 distance
 float32 direction # radians
 
