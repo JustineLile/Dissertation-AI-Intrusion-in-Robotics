@@ -22,4 +22,4 @@ Inputted files are treated with each line as one of the above commands </br>
 Additionally, for batch running: </br>
 In new terminal, "source /opt/ros/lyrical/setup.bash" or "source ~/cpp_robot/install/setup.bash" </br>
 Then "python3 batch_scenarios.py" </br>
-Which will search for a directory named "Benign" in the current directory, This can be changed by altering the variable "scenario_dir = Path("<DIRECTORY_NAME>")" at the top of the file </br>
+Which will search for a directory named "Benign" in the current directory, This can be changed by altering the variable "scenario_dir = Path("DIRECTORY_NAME")" at the top of the file </br>
