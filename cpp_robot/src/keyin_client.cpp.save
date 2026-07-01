@@ -111,7 +111,6 @@ public:
 		std::string obstr = "n/a";
 		int c_id = this->get_current_id();
 		this->write_log("move_robot()BEFORE_SERVICE_CALL", " ", parent_id, c_id, obstr);
-		RCLCPP_INFO(this->get_logger(), "Requested: (%lf, %lf), Current posiiton (%lf, %lf)", distance, direction, get_x_pos(), get_y_pos());
 		//send request for distance and direction
 		auto future = this->send_request(distance, direction, parent_id, c_id);
 		//if move successful then populate response message
@@ -124,7 +123,7 @@ public:
           	              RCLCPP_INFO(
 				//populate with success and position
                               	this->get_logger(),
-                                "%s | Distance Travelled: %lf | Position: (%lf, %lf)",
+                                "%s | Distance Travelled: %.2f | Position: (%.2f, %.2f)",
                                 response->message.c_str(),
 				response->act_distance,
                                 response->final_pose.position.x,
