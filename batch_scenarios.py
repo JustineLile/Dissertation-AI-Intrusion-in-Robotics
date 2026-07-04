@@ -138,19 +138,24 @@ def terminate():
 	started = time.time()
 	while True:
 		server_proc.terminate()
-		server_proc.wait()
+		try:
+			server_proc.wait(timeout=5)
+		except subprocess.TimoutExpired:
+			server_proc.kill()
 		client_proc.terminate()
-		client_proc.wait()
+		try:
+			client_proc.wait(timeout=5)
+		except subprocess.TimeoutExpired:
+			client_proc.kill()
 		print(f"server running {server_running()}, client running {client_running()}\n")
 		if not server_running() and not client_running():
+			time.sleep(2)
 			break
-		if time.time() - started > 10:
-			server_proc.kill()
-			server_proc.wait()
-			client_proc.kill()
-			client_proc.wait()
+		if time.time() - started > 20:
+			kill_procs = subprocess.run(["pkill", "-9", "-f", "ros2"])
 		#time.sleep(10)
 	
+
 
 #Run all scenarios in directory Benign
 def benign_scenarios():
@@ -158,7 +163,11 @@ def benign_scenarios():
 	#start_client()
 	#run_kclient(file)
 	#for each file in the specfied directory
-	for file in scenario_dir.iterdir():
+	#for file in scenario_dir.iterdir():
+	#	run_kclient(file.resolve())
+	#	terminate()
+
+	for file in sorted(scenario_dir.iterdir()):
 		run_kclient(file.resolve())
 		terminate()
 	print("Loaded all scenarios\n")
