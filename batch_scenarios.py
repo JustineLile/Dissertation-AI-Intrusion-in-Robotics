@@ -329,11 +329,11 @@ def benign_scenarios(dir_path, persistant_server):
 	#Do the following for each file in the path in order
 	for file in sorted(dir_path.iterdir()):
 		#break
-		if progress_int > 50:
-			print(f"Current file {progress_int}")
-			progress_int += 1
+		#if progress_int > 50:
+		#	print(f"Current file {progress_int}")
+		#	progress_int += 1
 		#	continue
-			break
+		#	break
 		print(f"LOOP finished set as {finished_proc}" )
 		#stores current scenario Path
 		statefile = file.resolve()
