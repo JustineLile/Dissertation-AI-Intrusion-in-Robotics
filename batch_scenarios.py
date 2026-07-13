@@ -158,6 +158,7 @@ def read_std(source, output):
 			finished_proc = True
 			print("Detected processed\n")
 			finished_proc = True
+			break
 		#error cases
 		if "Request Failed" in line:
 			print("Return code failure\n")
@@ -235,7 +236,7 @@ def wait_for_complete(file):
 		
 			#terminate()
 			#print("Exceeded timeout\n")
-			run_kclient(file)
+			reset_bool = True
 			break
 
 def terminate(persistant_server):
@@ -363,9 +364,11 @@ def benign_scenarios(dir_path, persistant_server):
 			threads.clear() #clear list
 		if persistant_server:
 			for t in threads:
+				#t.join() #incase anything left on threads
 				if t.name == "client":
-					t.join() #incase anything left on threads
+					#t.join() #incase anything left on threads
 					threads.remove(t) #remove from list
+					print(f"Threads after remove: {threading.active_count()}")
 					break
 		#acts as a sort of buffer between runs of scenario - prevents scenarios trying to overlap
 		if sleep_time == 25:
@@ -383,7 +386,7 @@ def main():
 	#begin running scenarios
 	benign_scenarios(Path("benign_scenarios"), True)
 	print("Completed all non persistant regular benign\n")
-	#time.sleep(5)
+	time.sleep(5)
 	benign_scenarios(Path("load_scenarios"), True)
 	print("Completed all non persistant load\n")
 	#test_scenarios()
