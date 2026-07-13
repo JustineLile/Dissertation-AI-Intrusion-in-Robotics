@@ -344,7 +344,7 @@ def benign_scenarios(dir_path, persistant_server):
 		#checks if necessary to rerun current scenario
 		if reset_bool:
 			finished_proc = False
-			terminate()
+			terminate(persistant_server)
 			threads.clear()
 			run_kclient(file.resolve(), persistant_server)
 		sleep_time += 1
