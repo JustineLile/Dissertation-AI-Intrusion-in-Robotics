@@ -384,16 +384,12 @@ def benign_scenarios(dir_path, persistant_server):
 def main():
 	
 	#begin running scenarios
-	benign_scenarios(Path("benign_scenarios"), True)
-	print("Completed all non persistant regular benign\n")
-	time.sleep(5)
-	benign_scenarios(Path("load_scenarios"), True)
-	print("Completed all non persistant load\n")
-	#test_scenarios()
 	benign_scenarios(Path("benign_scenarios"), False)
-	print("Completed all persistant regular\n")
+	print("Completed \n")
+	time.sleep(5)
 	benign_scenarios(Path("load_scenarios"), False)
-	print("Completed all persistant load\n")
+	print("Completed \n")
+	
 
 	#ensure scenarios complete before terminating processes
 	#while not completed:
