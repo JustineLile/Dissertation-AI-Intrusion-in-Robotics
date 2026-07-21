@@ -15,7 +15,7 @@ from sklearn.model_selection import GroupShuffleSplit, StratifiedShuffleSplit
 from sklearn.metrics import accuracy_score, precision_score, recall_score
 from sklearn.model_selection import train_test_split
 
-torch.manual_seed(42)
+torch.manual_seed(32)
 
 #df = pd.read_csv("merged-1-features.csv")
 df = pd.read_csv("matched-2-features.csv")
@@ -45,6 +45,7 @@ fields = [
 	"y",
 	"distance",
 	"direction",
+	"distance_moved",
 	"call_depth",
 	"sibling_count",
 	"response_time_log",
@@ -80,6 +81,7 @@ fields = [
 features = [
         "distance",
         "direction",
+        "distance_moved",
         "call_depth",
         "sibling_count",
         "response_time_log",
@@ -161,7 +163,7 @@ print(val[["sessionID", "scenario_type"]].drop_duplicates()["scenario_type"].val
 scalar = StandardScaler()
 
 #standardise non booleans
-direction_feats = [ "direction_cos", "direction_sin", "delta_x", "delta_y", "in_boundary"]
+direction_feats = [ "direction_cos", "direction_sin", "delta_x", "delta_y", "in_boundary", "distance_moved"]
 train[direction_feats] = scalar.fit_transform(train[direction_feats])
 test[direction_feats] = scalar.fit_transform(test[direction_feats])
 val[direction_feats] = scalar.fit_transform(val[direction_feats])
