@@ -365,9 +365,3 @@ print(f"{a_percent:.2f}% anomalies")
 #### Write Results ####
 r.to_csv("test1_results.csv", index=False)
 
-
-#export to type supported in c++
-print("Export")
-dummy_input = torch.randn(1,input_size)
-model.load_state_dict(torch.load("best_model_1.pt"))
-torch.onnx.export(model, dummy_input, "model1-1.onnx", input_names=["input"], output_names=["output"], opset_version=18)
