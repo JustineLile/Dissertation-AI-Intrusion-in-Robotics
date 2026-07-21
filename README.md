@@ -1,4 +1,4 @@
-# Diss-Intrusion-Detection
+# Dissertation: Intrusion Detection in Robotics Systems
 Running - </br>
 Install ros2 lyrical luth : Was carried out following "https://docs.ros.org/en/lyrical/Installation/Ubuntu-Install-Debs.html" for linux. </br>
 Once installed setup of a ros2 workspace is required: </br>
