@@ -1,4 +1,8 @@
 # Dissertation: Intrusion Detection in Robotics Systems
+Requirements: </br>
+Linux, PyTorch, LibTorch, ros2 Lyrical Luth
+
+
 Running - </br>
 Install ros2 lyrical luth : Was carried out following "https://docs.ros.org/en/lyrical/Installation/Ubuntu-Install-Debs.html" for linux. </br>
 Once installed setup of a ros2 workspace is required: </br>
@@ -23,3 +27,6 @@ Additionally, for batch running: </br>
 In new terminal, "source /opt/ros/lyrical/setup.bash" or "source ~/cpp_robot/install/setup.bash" </br>
 Then "python3 batch_scenarios.py" </br>
 Which will search for a directory named "Benign" in the current directory, This can be changed by altering the variable "scenario_dir = Path("DIRECTORY_NAME")" at the top of the file </br>
+
+</br>
+Additionally, current robotics program with deployed models requires sourcing ros2 and calling "export LD_LIBRARY_PATH=/home/user/libtorch/lib:$LD_LIBRARY_PATH"
