@@ -15,7 +15,7 @@ from sklearn.model_selection import GroupShuffleSplit, StratifiedShuffleSplit
 from sklearn.metrics import accuracy_score, precision_score, recall_score
 from sklearn.model_selection import train_test_split
 
-torch.manual_seed(8)
+torch.manual_seed(32)
 
 df = pd.read_csv("matched-3-features.csv")
 
@@ -75,35 +75,11 @@ fields = [
 ]
 
 features = [
-        "distance",
-        "direction",
-        "call_depth",
-        "sibling_count",
-        "IP_changed",
-        #"IP_delta",
-        "SP_delta",
-        "stack_depth",
-        #"FP_delta",
-	    "rax_changed",
-        "rbx_changed",
-        "rcx_changed",
-        "rdx_changed",
-        "rsi_changed",
-        "registers_changed",
-        "rax_delta",
-        "rbx_delta",
-        "rcx_delta",
-        "rdx_delta",
-        "rsi_delta",
-        #"distance_from_session_start",
-        #"distance_from_origin",
-        "distance_from_x_boundary",
-        "distance_from_y_boundary",
-        #"direction_cos",
-        #"direction_sin",
-	    "delta_x",
-	    "delta_y",
-	    "absolute_delta_IP"
+        "distance", "direction_cos", "direction_sin", "delta_x", "delta_y",
+        "call_depth", "distance_from_x_boundary", "distance_from_y_boundary",
+        "IP_delta", "SP_delta", "FP_delta", #"stack_depth", 
+        "rax_delta", "rbx_delta", "rcx_delta", "rdx_delta", "rsi_delta", "registers_changed",
+        "IP_changed", "rax_changed", "rbx_changed", "rcx_changed", "rdx_changed", "rsi_changed" 
 ]
 
 split = df[fields]
@@ -164,30 +140,41 @@ print(val[["sessionID", "scenario_type"]].drop_duplicates()["scenario_type"].val
 scalar = StandardScaler()
 
 #standardise non booleans
-direction_feats = [ "direction_cos", "direction_sin", "delta_x", "delta_y"]
-train[direction_feats] = scalar.fit_transform(train[direction_feats])
-test[direction_feats] = scalar.fit_transform(test[direction_feats])
-val[direction_feats] = scalar.fit_transform(val[direction_feats])
+feats = [ 
+    "distance", "direction_cos", "direction_sin", "delta_x", "delta_y",
+    "call_depth", "distance_from_x_boundary", "distance_from_y_boundary",
+    "IP_delta", "SP_delta", "FP_delta", #"stack_depth", 
+    "rax_delta", "rbx_delta", "rcx_delta", "rdx_delta", "rsi_delta", "registers_changed"
+]
+train_scale = scalar.fit_transform(train[feats])
+test_scale = scalar.transform(test[feats])
+val_scale = scalar.transform(val[feats])
 
-#distance_feats = ["distance", "distance_from_session_start", "distance_from_origin", "distance_from_x_boundary", "distance_from_y_boundary"] 
-distance_feats = ["distance_from_session_start","distance_from_origin", "distance_from_x_boundary", "distance_from_y_boundary"]
-train[distance_feats] = scalar.fit_transform(train[distance_feats])
-test[distance_feats] = scalar.fit_transform(test[distance_feats])
-val[distance_feats] = scalar.fit_transform(val[distance_feats])
+#print("Scaled\n")
+#print(train_scale[:5])
+
+non_scale = [ "IP_changed", "rax_changed", "rbx_changed", "rcx_changed", "rdx_changed", "rsi_changed" ]
 
 
-t_call=["call_depth"]
-train[t_call] = scalar.fit_transform(train[t_call])
-test[t_call] = scalar.fit_transform(test[t_call])
-val[t_call] = scalar.fit_transform(val[t_call])
+#joblib.dump(scalar, "scalar3.pk1")
+print("Scaler")
+print(scalar)
+print(scalar.mean_)
 
-pointer_reg = ["IP_delta", "SP_delta", "FP_delta", "stack_depth", "rax_delta", "rbx_delta", "rcx_delta", "rdx_delta", "rsi_delta", "absolute_delta_IP"]
-train[pointer_reg] = scalar.fit_transform(train[pointer_reg])
-test[pointer_reg] = scalar.fit_transform(test[pointer_reg])
-val[pointer_reg] = scalar.fit_transform(val[pointer_reg])
+np.savetxt("mean.csv", scalar.mean_, delimiter=",")
+np.savetxt("scale.csv", scalar.scale_, delimiter=",")
 
-joblib.dump(scalar, "scalar3.pk1")
 
+#add back in non scaled
+train_df = pd.DataFrame(train_scale, columns=feats, index=train.index)
+test_df = pd.DataFrame(test_scale, columns=feats, index=test.index)
+val_df = pd.DataFrame(val_scale, columns=feats, index=val.index)
+
+
+train_fin = pd.concat([train_df, train[non_scale]], axis=1)
+#train_fin = pd.DataFrame(train_concat, columns=features, index=train.index)
+test_fin = pd.concat([test_df, test[non_scale]], axis=1)
+val_fin = pd.concat([val_df, val[non_scale]], axis=1)
 
 
 ##### TRAINING #####
@@ -199,9 +186,9 @@ joblib.dump(scalar, "scalar3.pk1")
 print(train[features].isna().sum())
 
 #convert to pytorch type
-x_train = torch.tensor( train[features].to_numpy(), dtype=torch.float32)
-x_test = torch.tensor( test[features].to_numpy(), dtype=torch.float32)
-x_val = torch.tensor( val[features].to_numpy(), dtype=torch.float32)
+x_train = torch.tensor( train_fin[features].to_numpy(), dtype=torch.float32)
+x_test = torch.tensor( test_fin[features].to_numpy(), dtype=torch.float32)
+x_val = torch.tensor( val_fin[features].to_numpy(), dtype=torch.float32)
 
 #define data loader which allows batch training and shuffles data
 train_dataset = TensorDataset(x_train)
@@ -316,6 +303,10 @@ with torch.no_grad():
 
 errors = torch.mean( (x_val - reconstruct_val) ** 2, dim=1).numpy()
 
+example_input = torch.randn(1, input_size)
+scripted_model = torch.jit.trace(model, example_input)
+scripted_model.save("model.pt")
+
 #### anomaly threshold ####
 threshold = np.percentile( errors, 95)
 print(f"Anomaly threshold: {threshold}\n")
@@ -365,7 +356,3 @@ r.to_csv("test3_results.csv", index=False)
 
 
 
-print("Export")
-dummy_input = torch.randn(1,input_size)
-model.load_state_dict(torch.load("best_model_3.pt"))
-torch.onnx.export(model, dummy_input, "model3.onnx", input_names=["input"], output_names=["output"], opset_version=18)

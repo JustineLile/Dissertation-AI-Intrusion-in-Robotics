@@ -15,10 +15,10 @@ from sklearn.model_selection import GroupShuffleSplit, StratifiedShuffleSplit
 from sklearn.metrics import accuracy_score, precision_score, recall_score
 from sklearn.model_selection import train_test_split
 
-torch.manual_seed(42)
+torch.manual_seed(32)
 
 #df = pd.read_csv("merged-1-features.csv")
-df = pd.read_csv("matched-2-features.csv")
+df = pd.read_csv("matched-1-features.csv")
 
 #add length label - since  we knot the load scenarios were run last
 long_scenarios = df["sessionID"].unique()[-1000:]
@@ -27,25 +27,21 @@ df.loc[df["sessionID"].isin(long_scenarios), "scenario_type"] = "long"
 session_data = ( df[["sessionID", "scenario_type"]].drop_duplicates())
 print(session_data)
 
-
 df["delta_x"] = (df.groupby("sessionID")["x"].diff())
 df["delta_y"] = (df.groupby("sessionID")["y"].diff())
 df[["delta_x", "delta_y"]] = (df[["delta_x", "delta_y"]].fillna(0))
 
-#checks in range
-df["in_boundary"] = (df["x"].between(0, 100) & df["y"].between(0, 100)).astype(int)
-
+df["absolute_delta_IP"] = df["IP_delta"].abs()
 #### Normalisation ####
-
 
 fields = [
 	"sessionID",
+	"scenario_type",
 	"current_id",
 	"x",
 	"y",
 	"distance",
 	"direction",
-	"distance_moved",
 	"call_depth",
 	"sibling_count",
 	"response_time_log",
@@ -65,50 +61,26 @@ fields = [
 	"rcx_delta",
 	"rdx_delta",
 	"rsi_delta",
-	"obstructed",
+	#"obstructed",
 	"prev_x",
 	"prev_y",
-	"distance_error",
-	"distance_error_absolute",
-	"distance_error_ratio",
+	"distance_from_session_start",
+	"distance_from_origin",
+	"distance_from_x_boundary",
+	"distance_from_y_boundary",
 	"direction_cos",
 	"direction_sin",
 	"delta_x",
 	"delta_y",
-	"in_boundary"
+	"absolute_delta_IP"
 ]
 
 features = [
-        "distance", 
-        "direction_cos", 
-        "direction_sin", 
-        "delta_x", 
-        "delta_y", 
-        "distance_moved", 
-        "distance_error",
-        "distance_error_absolute",
-        "distance_error_ratio", 
-        "response_time_log", 
-        "call_depth", 
-        #"sibling_count", 
-        "IP_delta", 
-        #"SP_delta", 
-        "FP_delta", 
-        #"stack_depth", 
-        "rax_delta", 
-        "rbx_delta", 
-        "rcx_delta", 
-        "rdx_delta", 
-        "rsi_delta", 
-        "registers_changed",
-        "in_boundary", 
-        "obstructed", 
-        "IP_changed", 
-        "rax_changed", 
-        "rbx_changed", 
-        "rcx_changed", 
-        "rdx_changed", 
-        "rsi_changed"
+        "distance", "direction_cos", "direction_sin", "delta_x", "delta_y", 
+        "response_time_log", "call_depth", #"sibling_count",
+        "IP_delta", "SP_delta", "FP_delta", 
+        "rax_delta", "rbx_delta", "rcx_delta", "rdx_delta", "rsi_delta", "registers_changed",
+        "IP_changed", "rax_changed", "rbx_changed", "rcx_changed", "rdx_changed", "rsi_changed"
 ]
 
 split = df[fields]
@@ -119,7 +91,8 @@ group = df["sessionID"]
 s = GroupShuffleSplit(n_splits=1, test_size=0.2, random_state=42)
 splitter = StratifiedShuffleSplit(n_splits=1, test_size=0.2, random_state=42)
 
-#returns positions of velaues split 
+#returns positions of values split 
+#train_id, test_id = next(s.split(split, groups=group))
 #stratified
 train_id, test_id = next(splitter.split(session_data, session_data["scenario_type"]))
 train_ses = session_data.iloc[train_id]["sessionID"]
@@ -134,15 +107,22 @@ print(train_split[["sessionID", "scenario_type"]].drop_duplicates()["scenario_ty
 print("TEST:")
 print(test[["sessionID", "scenario_type"]].drop_duplicates()["scenario_type"].value_counts())
 
-#stratified
-train_id, test_id = next(splitter.split(session_data, session_data["scenario_type"]))
-train_ses = session_data.iloc[train_id]["sessionID"]
-test_ses = session_data.iloc[test_id]["sessionID"]
+#get entries at position
+#group shuffle
+#train_split = split.iloc[train_id].copy()
+#test = split.iloc[test_id].copy()
 
+#group2 = train_split["sessionID"]
 group2_data = (train_split[["sessionID", "scenario_type"]].drop_duplicates())
+
 #val split -- split training set to get validation set
 #val_split = GroupShuffleSplit(test_size=0.1, random_state=42)
 val_split = StratifiedShuffleSplit(n_splits=1, test_size=0.1, random_state=42)
+
+#split for validation set
+#train_id_val, val_id = next(val_split.split(train_split[fields], groups=group2))
+#train = split.iloc[train_id_val].copy()
+#val = split.iloc[val_id].copy()
 
 #STRATIFIED
 train_id_val, val_id = next(val_split.split(group2_data, group2_data["scenario_type"]))
@@ -157,15 +137,13 @@ print(train[["sessionID", "scenario_type"]].drop_duplicates()["scenario_type"].v
 print("VAL:")
 print(val[["sessionID", "scenario_type"]].drop_duplicates()["scenario_type"].value_counts())
 
-
 #standardise - only for training da
 scalar = StandardScaler()
 
-
 #standardise non booleans
 feats = [ 
-    "distance", "direction_cos", "direction_sin", "delta_x", "delta_y", "distance_moved", 
-    "distance_error","distance_error_absolute","distance_error_ratio", "response_time_log", "call_depth", #"sibling_count",
+    "distance", "direction_cos", "direction_sin", "delta_x", "delta_y", 
+    "response_time_log", "call_depth", #"sibling_count",
     "IP_delta", "SP_delta", "FP_delta", #"stack_depth", 
     "rax_delta", "rbx_delta", "rcx_delta", "rdx_delta", "rsi_delta", "registers_changed"
 ]
@@ -176,7 +154,7 @@ val_scale = scalar.transform(val[feats])
 #print("Scaled\n")
 #print(train_scale[:5])
 
-non_scale = ["in_boundary", "obstructed", "IP_changed", "rax_changed", "rbx_changed", "rcx_changed", "rdx_changed", "rsi_changed" ]
+non_scale = ["IP_changed", "rax_changed", "rbx_changed", "rcx_changed", "rdx_changed", "rsi_changed" ]
 
 #joblib.dump(scalar, "scalar2.pk1")
 print("Scaler")
@@ -199,9 +177,13 @@ test_fin = pd.concat([test_df, test[non_scale]], axis=1)
 val_fin = pd.concat([val_df, val[non_scale]], axis=1)
 
 
-
-
 ##### TRAINING #####
+##drop identifier
+#train = train.drop("sessionID",axis=1)
+#test = test.drop("sessionID",axis=1)
+#val = val.drop("sessionID",axis=1)
+
+print(train[features].isna().sum())
 
 #convert to pytorch type
 x_train = torch.tensor( train_fin[features].to_numpy(), dtype=torch.float32)
@@ -222,29 +204,33 @@ class Autoencoder(nn.Module):
 		#Encode
 		self.encoder = nn.Sequential(
 			# Encode data- widen fron 33 to 64 learned features, then down to 32, then finally 16 features
+			#input size, output size
 			nn.Linear(input_size, 64),
 			nn.LeakyReLU(0.01),
+			#nn.ReLU(),
 
 			nn.Linear(64, 32),
 			nn.LeakyReLU(0.01),
-	
+			#nn.ReLU(),
+
 			nn.Linear(32, 16)
 			#nn.LeakyReLU(0.01),
 
-			#nn.Linear(16,8)
+	
 		)
 
 		#Decode
 		self.decoder = nn.Sequential(
 			#inverse of encode
-			#nn.Linear(8,16),
-			#nn.LeakyReLU(0.01),
 
 			nn.Linear(16, 32),
 			nn.LeakyReLU(0.01),
+			#nn.ReLU(),
 
 			nn.Linear(32, 64),
 			nn.LeakyReLU(0.01),
+			#nn.ReLU(),
+
 
 			nn.Linear(64, input_size)
 		)
@@ -255,8 +241,8 @@ class Autoencoder(nn.Module):
 		decoded = self.decoder(encoded)
 		return decoded
 
-print(torch.isnan(x_train).sum())
-print(torch.isinf(x_train).sum())
+#print(torch.isnan(x_train).sum())
+#print(torch.isinf(x_train).sum())
 
 # Creating the model, input_size is length of features, 
 model = Autoencoder(input_size)
@@ -303,7 +289,7 @@ for epoch in range(100):
 	if val_loss < best_loss:
 		best_loss = val_loss
 		counter = 0
-		torch.save(model.state_dict(), "best_model_2.pt")
+		torch.save(model.state_dict(), "best_model_1.pt")
 	else:
 		counter += 1
 		if counter >= patience:
@@ -311,7 +297,7 @@ for epoch in range(100):
 			break
 
 #load the best
-model.load_state_dict(torch.load("best_model_2.pt"))
+model.load_state_dict(torch.load("best_model_1.pt"))
 model.eval()
 print(f"Finished. \n Best Validation Loss: {best_loss:.6f} \n")
 
@@ -326,7 +312,7 @@ threshold = np.percentile( errors, 95)
 print(f"Anomaly threshold: {threshold}\n")
 
 #write to file
-with open( "threshold2.txt", "w") as file:
+with open( "threshold1.txt", "w") as file:
 	file.write(str(threshold))
 
 #### TESTING ####
@@ -345,6 +331,7 @@ r = ids.copy()
 r["anomaly_score"] = test_errors
 r["anomaly"] = (r["anomaly_score"] > threshold)
 
+#results, best/worst and errors
 print("Scores\n")
 print(r.sort_values("anomaly_score",ascending=False).head(20))
 print(test_errors.min())
@@ -365,6 +352,9 @@ print("Number of Anomlies:")
 a_percent = (r["anomaly"].mean() * 100)
 print(f"{a_percent:.2f}% anomalies")
 
+
+
 #### Write Results ####
-r.to_csv("test2_results.csv", index=False)
+r.to_csv("test1_results.csv", index=False)
+
 
