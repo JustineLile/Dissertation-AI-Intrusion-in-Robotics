@@ -92,7 +92,7 @@ features = [
         "call_depth", 
         #"sibling_count", 
         "IP_delta", 
-        #"SP_delta", 
+        "SP_delta", 
         "FP_delta", 
         #"stack_depth", 
         "rax_delta", 
