@@ -200,7 +200,7 @@ public:
                 auto m2 = monitor::capture();
 		//std::vector<float> features = 
 		//extract features
-		std::vector<float> featuresTwo = extractTwo(parent_id, c_id, ns, m, direction, obstr);
+		std::vector<float> featuresTwo = extractTwo(parent_id, c_id, ns, m2, direction, obstr);
 		bool anomaly2 = model_two.isAnomaly(featuresTwo);
 		float anomaly_score2 = model_two.anomalyScore(featuresTwo);
 		this->write_Model2(anomaly2, anomaly_score2, c_id, direction);
