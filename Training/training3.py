@@ -77,8 +77,9 @@ fields = [
 features = [
         "distance", "direction_cos", "direction_sin", "delta_x", "delta_y",
         "call_depth", "distance_from_x_boundary", "distance_from_y_boundary",
-        "IP_delta", "FP_delta", #"stack_depth", 
-        "rax_delta", "rbx_delta", "rcx_delta", "rdx_delta", "rsi_delta", "registers_changed",
+        #"IP_delta", "FP_delta", #"stack_depth", 
+        #"rax_delta", "rbx_delta", "rcx_delta", "rdx_delta", "rsi_delta", 
+        "registers_changed",
         "IP_changed", "rax_changed", "rbx_changed", "rcx_changed", "rdx_changed", "rsi_changed" 
 ]
 
@@ -143,8 +144,9 @@ scalar = StandardScaler()
 feats = [ 
     "distance", "direction_cos", "direction_sin", "delta_x", "delta_y",
     "call_depth", "distance_from_x_boundary", "distance_from_y_boundary",
-    "IP_delta", "FP_delta", #"stack_depth", 
-    "rax_delta", "rbx_delta", "rcx_delta", "rdx_delta", "rsi_delta", "registers_changed"
+    #"IP_delta", "FP_delta", #"stack_depth", 
+    #"rax_delta", "rbx_delta", "rcx_delta", "rdx_delta", "rsi_delta", 
+    "registers_changed"
 ]
 train_scale = scalar.fit_transform(train[feats])
 test_scale = scalar.transform(test[feats])

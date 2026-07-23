@@ -91,15 +91,15 @@ features = [
         "response_time_log", 
         "call_depth", 
         #"sibling_count", 
-        "IP_delta", 
-        "SP_delta", 
-        "FP_delta", 
+        #"IP_delta", 
+        #"SP_delta", 
+        #"FP_delta", 
         #"stack_depth", 
-        "rax_delta", 
-        "rbx_delta", 
-        "rcx_delta", 
-        "rdx_delta", 
-        "rsi_delta", 
+       # "rax_delta", 
+       # "rbx_delta", 
+       # "rcx_delta", 
+       # "rdx_delta", 
+       # "rsi_delta", 
         "registers_changed",
         "in_boundary", 
         "obstructed", 
@@ -166,8 +166,9 @@ scalar = StandardScaler()
 feats = [ 
     "distance", "direction_cos", "direction_sin", "delta_x", "delta_y", "distance_moved", 
     "distance_error","distance_error_absolute","distance_error_ratio", "response_time_log", "call_depth", #"sibling_count",
-    "IP_delta", "SP_delta", "FP_delta", #"stack_depth", 
-    "rax_delta", "rbx_delta", "rcx_delta", "rdx_delta", "rsi_delta", "registers_changed"
+    #"IP_delta", "SP_delta", "FP_delta", #"stack_depth", 
+    #"rax_delta", "rbx_delta", "rcx_delta", "rdx_delta", "rsi_delta", 
+    "registers_changed"
 ]
 train_scale = scalar.fit_transform(train[feats])
 test_scale = scalar.transform(test[feats])
