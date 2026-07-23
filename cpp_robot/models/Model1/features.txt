@@ -5,14 +5,6 @@ delta_x
 delta_y 
 response_time_log
 call_depth
-IP_delta 
-SP_delta 
-FP_delta 
-rax_delta 
-rbx_delta 
-rcx_delta 
-rdx_delta
-rsi_delta 
 registers_changed
 IP_changed 
 rax_changed
